@@ -1,0 +1,33 @@
+# Node dependencies
+frontend/node_modules
+frontend/.env
+
+# Testing
+frontend/coverage
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Production
+frontend/build
+
+# Misc
+frontend/.DS_Store
+
+# Debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.pnpm-debug.log*
+
+# Vercel
+frontend/.vercel
+
+# TypeScript
+frontend/*.tsbuildinfo
+
+# Env files (do NOT commit secrets!)
+
+backend/node_modules
+backend/.env
