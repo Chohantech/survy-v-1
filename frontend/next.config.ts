@@ -2,36 +2,24 @@ import { config } from "@/lib/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-
   output: "standalone",
- images: {
+  images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-        port: "",
-      },
-      {
-        protocol: "https",
-        hostname: "images.pexels.com",
-        port: "",
-      },
-      {
-        protocol: "http",
-        hostname: "res.cloudinary.com",
-        port: "",
-      },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "http", hostname: "res.cloudinary.com" },
     ],
   },
-  rewrites: async () => {
-    return [
-      {
-        source: "/api/:path",
-        destination: `${config.apiUrl}/api/:path}`,
-      },
-    ];
-  },
+
+  rewrites: async () => [
+    {
+      source: "/api/:path*",
+      destination: `${config.apiUrl}/api/:path*`,
+    },
+  ],
+
+
 };
 
 export default nextConfig;
+
