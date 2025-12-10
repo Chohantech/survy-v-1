@@ -1,0 +1,183 @@
+# =======================================================================
+# 🌐 Nginx Setup & Configuration Guide for Next.js Standalone App
+# =======================================================================
+# 1️⃣ Create the config file
+sudo ufw allow 'Nginx HTTP'
+sudo ufw allow 'Nginx HTTPS'
+sudo ufw allow 'Nginx Full'
+
+sudo ufw status
+
+
+
+sudo mkdir -p /home/www-data
+sudo chown -R www-data:www-data /home/www-data
+sudo chmod 755 /home/www-data
+
+
+sudo systemctl stop nginx
+sudo nano /etc/nginx/sites-available/fgpumining.site
+sudo cp /gpu_mining/nginx.conf /etc/nginx/sites-available/fgpumining.site
+sudo ln -s /etc/nginx/sites-available/fgpumining.site /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sudo systemctl status nginx
+
+
+# ============================================================
+# 🧩 1. Update System & Install Nginx
+# ============================================================
+sudo apt update && sudo apt upgrade -y
+sudo apt install nginx -y
+
+# Enable Nginx to start on boot and verify status
+sudo systemctl enable nginx
+sudo systemctl start nginx
+sudo systemctl status nginx
+
+
+# ============================================================
+# 📁 2. Create App Directory & Set Permissions
+# ============================================================
+sudo mkdir -p /var/www/gpu_mining_app
+sudo chown -R www-data:www-data /var/www/gpu_mining_app
+sudo chmod -R 777 /var/www/gpu_mining_app
+ls -la /var/www/gpu_mining_app
+
+# Navigate to your app directory
+cd /var/www/gpu_mining_app
+
+# Start your Next.js standalone Node server manually (port 3000)
+node .next/standalone/server.js
+
+
+# ============================================================
+# ⚙️ 3. Edit Nginx Configuration
+# ============================================================
+sudo nano /etc/nginx/sites-available/default
+
+
+# ============================================================
+# 🌍 4. Example Nginx Reverse Proxy Configuration
+# ============================================================
+
+# ================================================================
+# 🌐 Nginx Reverse Proxy for Next.js Standalone App
+# ================================================================
+
+/etc/nginx/sites-available/fgpumining.site
+
+# ============================================================
+# 🌐 Nginx Configuration for Next.js Standalone App
+# Domain: fgpumining.site
+# ============================================================
+
+# ------------------------------------------------------------
+# 1️⃣ Redirect HTTP to HTTPS
+# ------------------------------------------------------------
+server {
+    listen 80;
+    listen [::]:80;
+    server_name fgpumining.site www.fgpumining.site;
+
+    # Redirect all HTTP traffic to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+# ------------------------------------------------------------
+# 2️⃣ Main HTTPS server block
+# ------------------------------------------------------------
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name fgpumining.site www.fgpumining.site;
+
+    # SSL Certificates (auto-managed by Certbot)
+    ssl_certificate /etc/letsencrypt/live/fgpumining.site/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/fgpumining.site/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Root for static assets
+    root /var/www/nextjs_app/.next/static;
+    index index.html;
+
+    # ------------------------------------------------------------
+    # 🔁 Proxy all dynamic requests to Next.js app on port 3000
+    # ------------------------------------------------------------
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # ------------------------------------------------------------
+    # 📦 Serve Next.js static files efficiently
+    # ------------------------------------------------------------
+    location /_next/static/ {
+        alias /var/www/nextjs_app/.next/static/;
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # ------------------------------------------------------------
+    # 🖼️ Serve public assets
+    # ------------------------------------------------------------
+    location /public/ {
+        alias /var/www/nextjs_app/public/;
+        expires 1y;
+        access_log off;
+        add_header Cache-Control "public, max-age=31536000";
+    }
+
+    # ------------------------------------------------------------
+    # ⚠️ Optional: Custom 404 page
+    # ------------------------------------------------------------
+    error_page 404 /404.html;
+}
+# ============================================================
+
+
+
+⚙️ Apply configuration
+sudo nano /etc/nginx/sites-available/fgpumining.site
+# Paste the config above
+
+sudo ln -sf /etc/nginx/sites-available/fgpumining.site /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+
+
+# ============================================================
+# ✅ 5. Test & Reload Nginx Configuration
+# ============================================================
+# Test configuration for syntax errors
+sudo nginx -t
+
+# Reload Nginx to apply changes
+sudo systemctl reload nginx
+
+
+# ============================================================
+# 🔒 6. (Optional) Enable SSL with Certbot
+# ============================================================
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d fgpumining.site -d www.fgpumining.site
+
+# Test renewal process
+sudo certbot renew --dry-run
+
+
+# =======================================================================
+# 🎉 Deployment Complete!
+# Your Next.js app is now live behind an Nginx reverse proxy.
+# =======================================================================
