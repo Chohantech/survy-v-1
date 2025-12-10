@@ -1,0 +1,339 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useState, useEffect } from "react";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
+import { formateDate } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Bookmark, MessageCircle, Share2 } from "lucide-react";
+import BeautifulVideo from "./beautiful-video";
+import ReactionPopover from "./post/reactions/reaction-popover";
+import { Comment, Reaction, User } from "@/types/global";
+import CommentInput from "./post/comment/comment-input";
+import { AnimatePresence, motion } from "framer-motion";
+import CommentItem from "./post/comment/comment-item";
+import { PostMediaDialog } from "./post/post-media-dialog";
+import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
+import { useQuery } from "@tanstack/react-query";
+import { getComments, sharePost } from "@/lib/actions/post.action";
+import { Dialog } from "@/components/ui/dialog";
+import { SharePostDialog } from "@/components/post/share-post-dialog";
+interface PostCardProps {
+  _id: string;
+  author: {
+    name: string;
+    profilePicture: string;
+    isVerified: boolean;
+    _id: string;
+  };
+  createdAt: Date;
+  content: {
+    text?: string;
+    media?: {
+      type: "image" | "video" | "document";
+      url: string;
+      caption: string;
+      size: number;
+      duration: number;
+    }[];
+  };
+  reactions: Reaction[];
+  comments?: {
+    content?: string;
+    author: {
+      name: string;
+      profilePicture: string;
+    };
+    createdAt: Date | string;
+  }[];
+  isGroup?: boolean;
+  group?: {
+    _id: string;
+    name: string;
+  };
+  currentUser?: User;
+}
+export const PostCard = ({
+  _id,
+  author: {
+    name: authorName,
+    profilePicture: authorAvatar,
+    isVerified: authorIsVerified,
+    _id: authorId,
+  },
+  isGroup = false,
+  createdAt,
+  content,
+  reactions,
+  group,
+  currentUser,
+}: PostCardProps) => {
+  const [showComments, setShowComments] = useState(false);
+  const { data: session } = authClient.useSession();
+  const [isShareOpen, setShareOpen] = useState(false);
+
+  // Fetch user groups and conversations
+  
+  const { data: commentToShow } = useQuery({
+    queryKey: ["get-post-comments", _id],
+    queryFn: async () =>
+      await getComments({
+        postId: _id as string,
+        token: session?.session.token as string,
+      }),
+    enabled: !!session?.session.token,
+  });
+
+  const renderMediaGrid = (media: any[]) => {
+    const count = media.length;
+    
+    // Show only first 3 photos
+    const displayMedia = media.slice(0, 3);
+    const hasMore = count > 3;
+
+    if (count === 1) {
+      // Single image/video - full width
+      return (
+        <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+          <Image
+            src={media[0].url}
+            alt="Post content"
+            fill
+            priority
+            loading="eager"
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyNlZWUnLz48L3N2Zz4="
+            className="object-contain"
+          />
+        </div>
+      );
+    }
+
+    if (count === 2) {
+      // Two images - side by side
+      return (
+        <div className="grid grid-cols-2 gap-1">
+          {displayMedia.map((item, index) => (
+            <div
+              key={index}
+              className="relative aspect-square bg-gray-100 overflow-hidden"
+            >
+              <Image
+                src={item.url}
+                alt={`Post content ${index + 1}`}
+                fill
+                priority={index === 0}
+                loading={index === 0 ? "eager" : "lazy"}
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyNlZWUnLz48L3N2Zz4="
+                className="object-contain"
+              />
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Three or more images - first full width, others in 2-column grid
+    return (
+      <div className="space-y-1">
+        {/* First image - full width */}
+        <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+          <Image
+            src={media[0].url}
+            alt="Post content 1"
+            fill
+            priority
+            loading="eager"
+            placeholder="blur"
+            blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyNlZWUnLz48L3N2Zz4="
+            className="object-cover"
+          />
+        </div>
+        
+        {/* Remaining images in 2-column grid */}
+        <div className="grid grid-cols-2">
+          {displayMedia.slice(1).map((item, index) => (
+            <div
+              key={index + 1}
+              className="relative aspect-square bg-gray-100 overflow-hidden"
+            >
+              <Image
+                src={item.url}
+                alt={`Post content ${index + 2}`}
+                fill
+                priority={false}
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbGw9JyNlZWUnLz48L3N2Zz4="
+                className="object-cover"
+              />
+              
+              {/* More button overlay on the last visible image */}
+              {index === 1 && hasMore && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer">
+                  <span className="text-white text-xl font-bold">+{count - 3}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  return (
+    <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6 w-full border border-gray-100">
+      {/* Post Header */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage
+              src={authorAvatar || "/images/user.png"}
+              alt={authorName}
+            />
+          </Avatar>
+          <div>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/user/${authorId}`}
+                className="font-semibold text-sm text-gray-900 hover:underline">
+                {authorName}
+              </Link>
+              {authorIsVerified && (
+                <Badge variant="default" className="w-4 h-4 p-0 bg-blue-600">
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </Badge>
+              )}
+              <span className="text-gray-500 text-xs">
+                • {formateDate(createdAt)}
+              </span>
+            </div>
+            {isGroup && (
+              <p className="text-sm text-gray-600">
+                in{" "}
+                <Link
+                  href={`/groups/${group?._id as string}`}
+                  className="text-blue-600 hover:underline">
+                  {group?.name}
+                </Link>
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Post Content */}
+      {content.text && (
+        <p className="px-4 pb-3 text-gray-800 text-base">{content.text}</p>
+      )}
+
+      {content.media &&
+        content.media?.length > 0 &&
+        content.media.every(media => media.type === "image") && (
+          <PostMediaDialog
+            media={content.media}
+            comments={commentToShow ?? ([] as Comment[])}
+            reactions={reactions}
+            postId={_id}
+            currentUser={currentUser as User}
+            author={{
+              name: authorName,
+              profilePicture: authorAvatar ?? authorAvatar,
+              isVerified: authorIsVerified,
+            }}
+            trigger={
+              <div className="relative w-full bg-gray-100 cursor-pointer rounded-lg overflow-hidden">
+                {renderMediaGrid(content.media)}
+              </div>
+            }
+          />
+        )}
+
+      {content.media &&
+        content.media?.length > 0 &&
+        content.media.some(media => media.type === "video") && (
+          <div className="aspect-video relative z-0 w-full">
+            <BeautifulVideo
+              src={content.media.find(media => media.type === "video")?.url || ""}
+              plyrOptions={{
+                invertTime: false,
+                quality: { default: 720, options: [1080, 720, 480] },
+              }}
+            />
+          </div>
+        )}
+
+      {/* Post Actions */}
+      <div className="p-4">
+        <div className="flex items-center gap-4 mb-3">
+          <ReactionPopover
+            postId={_id}
+            isReacted={reactions.some(
+              (reaction) => reaction.user._id === currentUser?.id
+            )}
+            isReactedType={
+              reactions.find((reaction) => reaction.user._id === currentUser?.id)
+                ?.type as "like" | "love" | "haha" | "wow" | "sad" | "angry"
+            }
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            className="border-none cursor-pointer"
+            onClick={() => setShowComments((prev) => !prev)}>
+            <MessageCircle />
+          </Button>
+          <Dialog open={isShareOpen} onOpenChange={setShareOpen}>
+            <SharePostDialog
+              postId={_id}
+              trigger={
+                <Button variant="outline" className="border-none cursor-pointer hover:text-blue-500">
+                  <Share2 />
+                </Button>
+              }
+            />
+          </Dialog>
+        </div>
+
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-sm font-medium text-gray-700">
+            {reactions.length} likes
+          </span>
+          <span className="text-sm text-gray-500">😍 😃</span>
+        </div>
+      </div>
+
+      {/* Comments */}
+      <div className="px-4 pb-4 overflow-hidden">
+        <AnimatePresence initial={false}>
+          {showComments && (
+            <motion.div
+              key="comments"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
+              className="space-y-4 will-change-transform">
+              {commentToShow &&
+                commentToShow.length > 0 &&
+                commentToShow.map((comment: Comment, index: number) => (
+                  <CommentItem
+                    key={index}
+                    comment={comment as Comment}
+                    postId={_id}
+                  />
+                ))}
+              <CommentInput postId={_id} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
