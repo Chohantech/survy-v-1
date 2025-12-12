@@ -16,7 +16,14 @@ const secret = createSecretKey(Buffer.from(process.env.JWT_SECRET, "utf-8"));
 const isProd = process.env.NODE_ENV === "production";
 const domain = isProd ? process.env.FRONTEND_DOMAIN : undefined;
 
-// Create custom JWT for sessions
+let auth = null;
+
+/**
+ * Create a custom JWT token for a session
+ * @param {string} sessionId - Session ID
+ * @param {string} userId - User ID
+ * @returns {Promise<string>} - Signed JWT
+ */
 async function createCustomToken(sessionId, userId) {
   return new SignJWT({ sessionId, userId })
     .setProtectedHeader({ alg: "HS256" })
@@ -25,8 +32,9 @@ async function createCustomToken(sessionId, userId) {
     .sign(secret);
 }
 
-let auth = null;
-
+/**
+ * Initialize BetterAuth
+ */
 export const initAuth = async () => {
   if (!mongoose.connection.db) {
     throw new Error(
@@ -34,30 +42,36 @@ export const initAuth = async () => {
     );
   }
 
-  console.log("FRONTEND URL: ", process.env.FRONTEND_URL);
+  // Log frontend URL and database info
+  console.log(
+    "FRONTEND URL:", process.env.FRONTEND_URL,
+    "Database Name:", mongoose.connection.db.databaseName
+  );
 
   auth = betterAuth({
     database: mongodbAdapter(mongoose.connection.db),
 
-    // Email/password login
+    // Enable email/password login
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
 
-    // Cross-subdomain cookies
+    // Advanced cookie configuration
     advanced: {
       crossSubDomainCookies: {
         enabled: true,
-        domain, // automatically picks dev or prod domain
+        domain,
       },
     },
 
+    // Trusted origins for CORS
     trustedOrigins: [
       process.env.FRONTEND_URL,
       "http://localhost:3000",
     ],
 
+    // User model configuration
     user: {
       modelName: "users",
       model: User,
@@ -77,6 +91,7 @@ export const initAuth = async () => {
       },
     },
 
+    // Session model configuration
     session: {
       modelName: "usersessions",
       model: UserSession,
@@ -93,6 +108,7 @@ export const initAuth = async () => {
       },
     },
 
+    // Database hooks for session management
     databaseHooks: {
       session: {
         create: {
@@ -129,6 +145,9 @@ export const initAuth = async () => {
   return auth;
 };
 
+/**
+ * Get initialized auth instance
+ */
 export const getAuth = () => {
   if (!auth) throw new Error("Auth not initialized yet.");
   return auth;
