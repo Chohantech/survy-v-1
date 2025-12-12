@@ -3,9 +3,13 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { SignJWT } from "jose";
 import clientPromise from "./db";
 import { sendResetEmail } from "./actions/email";
-const domain = process.env.NEXT_PUBLIC_DOMAIN;
-const isProd = process.env.NODE_ENV === "production";
 
+// Environment
+const isProd = process.env.NODE_ENV === "production";
+const domain = isProd ? process.env.NEXT_PUBLIC_DOMAIN : undefined;
+const secret = new TextEncoder().encode(process.env.JWT_SECRET); // server-only
+
+// Cookie configuration
 const cookies = {
   sessionToken: {
     name: "better-auth.session",
@@ -13,7 +17,7 @@ const cookies = {
     secure: isProd,
     httpOnly: true,
     sameSite: "none",
-    domain: isProd ? domain : undefined,
+    domain,
   },
   csrfToken: {
     name: "better-auth.csrf",
@@ -21,7 +25,7 @@ const cookies = {
     secure: isProd,
     httpOnly: false,
     sameSite: "none",
-    domain: isProd ? domain : undefined,
+    domain,
   },
   callbackUrl: {
     name: "better-auth.callback-url",
@@ -29,12 +33,11 @@ const cookies = {
     secure: isProd,
     httpOnly: false,
     sameSite: "none",
-    domain: isProd ? domain : undefined,
+    domain,
   },
 };
 
-const secret = new TextEncoder().encode(process.env.NEXT_PUBLIC_JWT_SECRET);
-
+// Custom JWT creation
 async function createCustomToken(sessionId: string, userId: string) {
   return new SignJWT({ sessionId, userId })
     .setProtectedHeader({ alg: "HS256" })
@@ -43,12 +46,13 @@ async function createCustomToken(sessionId: string, userId: string) {
     .sign(secret);
 }
 
+// Initialize MongoDB
 const client = await clientPromise;
 
+// BetterAuth setup
 export const auth = betterAuth({
   database: mongodbAdapter(client.db("svyrndb")),
-cookies
-,
+  cookies,
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -56,15 +60,13 @@ cookies
       await sendResetEmail(user.email, url);
     },
   },
-
   socialProviders: {
     google: {
-      prompt: 'select_account',
+      prompt: "select_account",
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
-
   user: {
     modelName: "users",
   },
@@ -72,7 +74,6 @@ cookies
     modelName: "usersessions",
     collectionName: "usersessions",
   },
-
   databaseHooks: {
     session: {
       create: {

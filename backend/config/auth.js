@@ -9,8 +9,14 @@ import { SignJWT } from "jose";
 
 dotenv.config();
 
+// Server-side JWT secret
 const secret = createSecretKey(Buffer.from(process.env.JWT_SECRET, "utf-8"));
 
+// Determine environment
+const isProd = process.env.NODE_ENV === "production";
+const domain = isProd ? process.env.FRONTEND_DOMAIN : undefined;
+
+// Create custom JWT for sessions
 async function createCustomToken(sessionId, userId) {
   return new SignJWT({ sessionId, userId })
     .setProtectedHeader({ alg: "HS256" })
@@ -32,20 +38,26 @@ export const initAuth = async () => {
 
   auth = betterAuth({
     database: mongodbAdapter(mongoose.connection.db),
+
+    // Email/password login
     emailAndPassword: {
       enabled: true,
       requireEmailVerification: false,
     },
+
+    // Cross-subdomain cookies
     advanced: {
       crossSubDomainCookies: {
         enabled: true,
-        domain: process.env.FRONTEND_URL, // your domain
+        domain, // automatically picks dev or prod domain
       },
     },
+
     trustedOrigins: [
       process.env.FRONTEND_URL,
       "http://localhost:3000",
     ],
+
     user: {
       modelName: "users",
       model: User,
@@ -64,6 +76,7 @@ export const initAuth = async () => {
         isActive: { type: Boolean },
       },
     },
+
     session: {
       modelName: "usersessions",
       model: UserSession,
@@ -79,35 +92,33 @@ export const initAuth = async () => {
         isActive: { type: Boolean },
       },
     },
+
     databaseHooks: {
       session: {
         create: {
           async before(session) {
             const token = await createCustomToken(session.id, session.userId);
-            return {
-              data: {
-                ...session,
-                token: token,
-              },
-            };
+            return { data: { ...session, token } };
           },
           async after(session, context) {
             const token = session.token;
-
             context.setCookie("token", token, {
               httpOnly: true,
-              secure: true,           
-              sameSite: "None",      
-              path: "/",             
+              secure: isProd,
+              sameSite: "none",
+              path: "/",
+              domain,
             });
           },
         },
         delete: {
           async after(_, context) {
             context.setCookie("token", "", {
-              secure: true,
+              httpOnly: true,
+              secure: isProd,
               sameSite: "none",
               path: "/",
+              domain,
             });
           },
         },
