@@ -8,7 +8,7 @@
 # MongoDB Configuration
 # ==========================
 MONGO_VERSION ?= 8.0
-DB_HOST ?= localhost
+DB_HOST ?= 82.221.139.203
 DB_PORT ?= 27017
 DB_NAME ?= svyrndb
 DB_USER ?= svyrnuser

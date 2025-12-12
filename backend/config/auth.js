@@ -45,7 +45,6 @@ export const initAuth = async () => {
     trustedOrigins: [
       process.env.FRONTEND_URL,
       "http://localhost:3000",
-      "http://localhost:3001",
     ],
     user: {
       modelName: "users",
@@ -95,14 +94,11 @@ export const initAuth = async () => {
           async after(session, context) {
             const token = session.token;
 
-            // Set cookie in response
-            // In the session.create.after hook:
             context.setCookie("token", token, {
               httpOnly: true,
-              domain: 'svyrn-git-main-muhammad-sarmads-projects-c4ee4f7a.vercel.app',
-              secure: true,
-              sameSite: "Lax",
-              path: "/",
+              secure: true,           
+              sameSite: "None",      
+              path: "/",             
             });
           },
         },
