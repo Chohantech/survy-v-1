@@ -14,8 +14,7 @@ const secret = createSecretKey(Buffer.from(process.env.JWT_SECRET, "utf-8"));
 
 // Determine environment
 const isProd = process.env.NODE_ENV === "production";
-const domain = isProd ? process.env.FRONTEND_DOMAIN : undefined;
-
+const domain = isProd ? (process.env.FRONTEND_DOMAIN ?? "svryn.com") : undefined;
 let auth = null;
 
 /**
