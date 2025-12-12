@@ -18,6 +18,34 @@ const client = await clientPromise;
 
 export const auth = betterAuth({
   database: mongodbAdapter(client.db("social-network")),
+
+  cookies: {
+    sessionToken: {
+      name: "better-auth.session",
+      domain: "svryn.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+      sameSite: "none",
+    },
+    csrfToken: {
+      name: "better-auth.csrf",
+      domain: "svryn.com",
+      path: "/",
+      secure: true,
+      httpOnly: false,
+      sameSite: "none",
+    },
+    callbackUrl: {
+      name: "better-auth.callback-url",
+      domain: "svryn.com",
+      path: "/",
+      secure: true,
+      httpOnly: false,
+      sameSite: "none",
+    },
+  },
+
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -25,17 +53,15 @@ export const auth = betterAuth({
       await sendResetEmail(user.email, url);
     },
   },
+
   socialProviders: {
     google: {
       prompt: 'select_account',
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
-    // apple: {
-    //   clientId: process.env.APPLE_CLIENT_ID!,
-    //   clientSecret: process.env.APPLE_CLIENT_SECRET!,
-    // }
   },
+
   user: {
     modelName: "users",
   },
@@ -43,38 +69,15 @@ export const auth = betterAuth({
     modelName: "usersessions",
     collectionName: "usersessions",
   },
+
   databaseHooks: {
     session: {
       create: {
         async before(session) {
           const token = await createCustomToken(session.id, session.userId);
-          return {
-            data: {
-              ...session,
-              token: token,
-            },
-          };
+          return { data: { ...session, token } };
         },
-        // async after(session, context) {
-        //   context?.setCookie("token", session.token, {
-        //     httpOnly: true,
-        //     secure: true,
-        //     sameSite: "lax",
-        //     path: "/",
-        //   });
-        // },
       },
-      // delete: {
-      //   after: async (_session: any, context: any) => {
-      //     context?.setCookie("token", "", {
-      //       httpOnly: true,
-      //       secure: true,
-      //       sameSite: "lax",
-      //       path: "/",
-      //       maxAge: 0, // ✅ Instructs browser to delete cookie
-      //     });
-      //   },
-      // },
     },
   },
 });
