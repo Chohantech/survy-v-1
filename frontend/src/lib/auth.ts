@@ -100,16 +100,6 @@ export const auth = betterAuth({
           const token = await createCustomToken(session.id, session.userId);
           return { data: { ...session, token } };
         },
-        async after(session, context) {
-  context?.setCookie("token", session.token, {
-    httpOnly: true,
-    secure: true,             // must be true on production
-    sameSite: "lax",          // or "none" if cross-site
-    path: "/",
-    domain: "www.svryn.com",  // ensure this matches your domain
-  });
-}
-
       },
     },
   },
