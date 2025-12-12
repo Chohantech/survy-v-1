@@ -19,32 +19,30 @@ const client = await clientPromise;
 export const auth = betterAuth({
   database: mongodbAdapter(client.db("social-network")),
 
-  cookies: {
-    sessionToken: {
-      name: "better-auth.session",
-      domain: "svryn.com",
-      path: "/",
-      secure: true,
-      httpOnly: true,
-      sameSite: "none",
-    },
-    csrfToken: {
-      name: "better-auth.csrf",
-      domain: "svryn.com",
-      path: "/",
-      secure: true,
-      httpOnly: false,
-      sameSite: "none",
-    },
-    callbackUrl: {
-      name: "better-auth.callback-url",
-      domain: "svryn.com",
-      path: "/",
-      secure: true,
-      httpOnly: false,
-      sameSite: "none",
-    },
+cookies: {
+  sessionToken: {
+    name: "better-auth.session",
+    path: "/",
+    secure: true,
+    httpOnly: true,
+    sameSite: "none",
   },
+  csrfToken: {
+    name: "better-auth.csrf",
+    path: "/",
+    secure: true,
+    httpOnly: false,
+    sameSite: "none",
+  },
+  callbackUrl: {
+    name: "better-auth.callback-url",
+    path: "/",
+    secure: true,
+    httpOnly: false,
+    sameSite: "none",
+  },
+},
+
 
   emailAndPassword: {
     enabled: true,
