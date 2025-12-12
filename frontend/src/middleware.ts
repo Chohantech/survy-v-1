@@ -23,6 +23,7 @@ const authRoutes = ["/sign-in", "/sign-up", "/forgot-password"];
 export async function middleware(request: NextRequest) {
   // Redirect unauthenticated user from protected pages
   const session = await auth.api.getSession({ headers: request.headers });
+  console.log(session)
   const token = session?.session.token;
   const pathname = request.nextUrl.pathname;
 

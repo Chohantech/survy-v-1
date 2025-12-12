@@ -1,43 +1,30 @@
+// ================================
+// AUTHENTICATION CONFIGURATION
+// ================================
+
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { SignJWT } from "jose";
 import clientPromise from "./db";
 import { sendResetEmail } from "./actions/email";
 
-// Environment
-const isProd = process.env.NODE_ENV === "production";
-const domain = isProd ? process.env.NEXT_PUBLIC_DOMAIN : undefined;
-const secret = new TextEncoder().encode(process.env.JWT_SECRET); // server-only
+// ================================
+// ENVIRONMENT VARIABLES & SECRET
+// ================================
 
-// Cookie configuration
-const cookies = {
-  sessionToken: {
-    name: "better-auth.session",
-    path: "/",
-    secure: isProd,
-    httpOnly: true,
-    sameSite: "none",
-    domain,
-  },
-  csrfToken: {
-    name: "better-auth.csrf",
-    path: "/",
-    secure: isProd,
-    httpOnly: false,
-    sameSite: "none",
-    domain,
-  },
-  callbackUrl: {
-    name: "better-auth.callback-url",
-    path: "/",
-    secure: isProd,
-    httpOnly: false,
-    sameSite: "none",
-    domain,
-  },
-};
+// JWT secret (server-side only)
+const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
-// Custom JWT creation
+// ================================
+// CUSTOM JWT CREATION FUNCTION
+// ================================
+
+/**
+ * Creates a custom JWT token for a user session.
+ * @param sessionId - The ID of the session
+ * @param userId - The ID of the user
+ * @returns Signed JWT string
+ */
 async function createCustomToken(sessionId: string, userId: string) {
   return new SignJWT({ sessionId, userId })
     .setProtectedHeader({ alg: "HS256" })
@@ -46,37 +33,69 @@ async function createCustomToken(sessionId: string, userId: string) {
     .sign(secret);
 }
 
-// Initialize MongoDB
-const client = await clientPromise;
+// ================================
+// MONGODB INITIALIZATION
+// ================================
 
-// BetterAuth setup
+// Connect to MongoDB
+const client = await clientPromise;
+const db = client.db("svyrndb");
+
+// ================================
+// BETTER-AUTH SETUP
+// ================================
+
 export const auth = betterAuth({
-  database: mongodbAdapter(client.db("svyrndb")),
-  cookies,
+  database: mongodbAdapter(db), // MongoDB adapter for BetterAuth
+
+  // ============================
+  // EMAIL & PASSWORD CONFIG
+  // ============================
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false,
+    requireEmailVerification: false, // Skip email verification
     sendResetPassword: async ({ user, url }) => {
+      // Send password reset email
       await sendResetEmail(user.email, url);
     },
   },
+
+  // ============================
+  // SOCIAL AUTH PROVIDERS
+  // ============================
   socialProviders: {
     google: {
-      prompt: "select_account",
+      prompt: "select_account", // Always prompt for account selection
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
+
+  // ============================
+  // USER MODEL CONFIGURATION
+  // ============================
   user: {
-    modelName: "users",
+    modelName: "users", // MongoDB collection for users
   },
+
+  // ============================
+  // SESSION CONFIGURATION
+  // ============================
   session: {
     modelName: "usersessions",
     collectionName: "usersessions",
   },
+
+  // ============================
+  // DATABASE HOOKS
+  // ============================
   databaseHooks: {
     session: {
       create: {
+        /**
+         * Hook before creating a session in DB
+         * Adds a custom JWT token to session data
+         */
         async before(session) {
           const token = await createCustomToken(session.id, session.userId);
           return { data: { ...session, token } };

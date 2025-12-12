@@ -7,7 +7,7 @@ if (!apiUrl) {
 }
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+//  output: "standalone",
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
