@@ -39,7 +39,7 @@ async function createCustomToken(sessionId: string, userId: string) {
 
 // Connect to MongoDB
 const client = await clientPromise;
-const db = client.db("svyrndb");
+const db = client.db("social-network");
 
 // ================================
 // BETTER-AUTH SETUP

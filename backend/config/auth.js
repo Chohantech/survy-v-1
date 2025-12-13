@@ -4,7 +4,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import UserSession from "../models/UserSession.js";
 import User from "../models/User.js";
 import dotenv from "dotenv";
-import { createSecretKey } from "crypto";
+import { createSecretKey, randomUUID } from "crypto";
 import { SignJWT } from "jose";
 
 dotenv.config();
@@ -47,8 +47,14 @@ export const initAuth = async () => {
     "Database Name:", mongoose.connection.db.databaseName
   );
 
+  // Get base URL for better-auth (backend URL)
+  const baseURL = process.env.BACKEND_URL || process.env.API_URL || `http://localhost:${process.env.PORT || 5000}`;
+  const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
+
   auth = betterAuth({
     database: mongodbAdapter(mongoose.connection.db),
+    baseURL, // Backend URL for API routes
+    basePath: "/api/auth", // API path prefix
 
     // Enable email/password login
     emailAndPassword: {
@@ -56,11 +62,25 @@ export const initAuth = async () => {
       requireEmailVerification: false,
     },
 
+    // Social auth providers
+    socialProviders: {
+      google: {
+        prompt: "select_account", // Always prompt for account selection
+        clientId: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      },
+    },
+
     // Advanced cookie configuration
     advanced: {
+      cookiePrefix: "better-auth",
       crossSubDomainCookies: {
-        enabled: true,
+        enabled: !!domain, // Only enable if domain is set (production)
         domain,
+      },
+      // Cookie settings for session persistence
+      generateId: () => {
+        return randomUUID();
       },
     },
 
@@ -117,12 +137,15 @@ export const initAuth = async () => {
           },
           async after(session, context) {
             const token = session.token;
+            // Cookie settings: sameSite "none" requires secure: true
+            // For localhost development, use "lax" with secure: false
             context.setCookie("token", token, {
               httpOnly: true,
-              secure: isProd,
-              sameSite: "none",
+              secure: isProd, // true in production, false in dev
+              sameSite: isProd ? "none" : "lax", // "none" for cross-site, "lax" for same-site
               path: "/",
-              domain,
+              ...(domain && { domain }), // Only set domain in production
+              maxAge: 60 * 60 * 24 * 7, // 7 days
             });
           },
         },
@@ -131,9 +154,10 @@ export const initAuth = async () => {
             context.setCookie("token", "", {
               httpOnly: true,
               secure: isProd,
-              sameSite: "none",
+              sameSite: isProd ? "none" : "lax",
               path: "/",
-              domain,
+              ...(domain && { domain }),
+              maxAge: 0, // Expire immediately
             });
           },
         },

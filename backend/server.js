@@ -57,9 +57,16 @@ console.log("FRONTEND URL: ",process.env.FRONTEND_URL)
 
 const corsOptions = {
   origin: [process.env.FRONTEND_URL, 'http://localhost:3000'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  credentials: true, // Important: allow cookies to be sent
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'Cookie', 
+    'Set-Cookie',
+    'X-Requested-With'
+  ],
+  exposedHeaders: ['Set-Cookie'], // Expose Set-Cookie header to client
 };
 
 app.use(cors(corsOptions));
