@@ -29,6 +29,8 @@ export async function middleware(request: NextRequest) {
   
   // Also check for the custom token cookie (set by backend database hook)
   const tokenCookie = request.cookies.get("token")?.value;
+
+  console.log("Better-auth session cookie:", betterAuthSessionCookie);
   
   // Try to get the session from better-auth API
   let session = null;
