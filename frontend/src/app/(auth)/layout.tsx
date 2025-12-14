@@ -1,12 +1,40 @@
+"use client";
+
 import AuthBottomSheet from "@/components/auth/auth-bottom-sheet";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
 
 interface AuthProps {
   children: React.ReactNode;
 }
 
-const AuthLayout = async ({ children }: AuthProps) => {
+const AuthLayout = ({ children }: AuthProps) => {
+  const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
+
+  useEffect(() => {
+    // Only redirect if we're not loading and there is a session
+    if (!isPending && session?.session) {
+      console.log("Session found, redirecting to home");
+      router.push("/home");
+    }
+  }, [session, isPending, router]);
+
+  // Show loading while checking session
+  if (isPending) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If there's a session, don't render auth layout (will redirect)
+  if (session?.session) {
+    return null;
+  }
 
   return (
     <main className="w-full md:h-screen overflow-y-hidden flex">

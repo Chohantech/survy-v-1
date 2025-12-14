@@ -2,12 +2,19 @@
 
 ## Issues Fixed
 
-### 1. **Proxy File Configuration**
-- ✅ Enhanced `proxy.ts` with better error handling and logging
-- ✅ Improved production debugging capabilities
+### 1. **Authentication Strategy Change**
+- ✅ Removed server-side session checks from `proxy.ts`
+- ✅ Moved authentication to client-side using `useSession` hook
+- ✅ Simplified proxy to only handle static file routing
 
-### 2. **Environment Variables for Production**
-You need to create a `.env.production` file on your VPS with the correct production URLs:
+### 2. **Client-Side Authentication**
+- ✅ Main layout now uses `authClient.useSession()` for authentication
+- ✅ Auth layout redirects authenticated users client-side
+- ✅ Added loading states while checking authentication
+- ✅ Removed dependency on server-side session cookies
+
+### 3. **Environment Variables for Production**
+You still need to create a `.env.production` file on your VPS with the correct production URLs:
 
 ```bash
 # On your VPS, create .env.production with:

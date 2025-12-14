@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
 
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
@@ -13,56 +12,21 @@ export async function proxy(request: NextRequest) {
 		"/reset-password",
 	];
 	
-	// Check if the current path is a public route
-	const isPublicRoute = publicRoutes.some(route => 
-		pathname === route || pathname.startsWith(route + "/")
-	);
-	
-	// Always allow API auth routes
-	if (pathname.startsWith("/api/auth/")) {
+	// Always allow API routes
+	if (pathname.startsWith("/api/")) {
 		return NextResponse.next();
 	}
 	
-	// If it's a public route, allow access
-	if (isPublicRoute) {
+	// Always allow static files and assets
+	if (pathname.startsWith("/_next/") || 
+		pathname.startsWith("/favicon.ico") ||
+		pathname.startsWith("/icons/") ||
+		pathname.startsWith("/images/")) {
 		return NextResponse.next();
 	}
 	
-	// For protected routes, check for session
-	try {
-		const sessionCookie = getSessionCookie(request);
-		
-		// Enhanced logging for debugging production issues
-		const isProduction = process.env.NODE_ENV === "production";
-		if (!isProduction) {
-			console.log("Proxy Debug:", {
-				path: pathname,
-				sessionCookie: !!sessionCookie,
-				host: request.headers.get("host"),
-				cookies: request.headers.get("cookie")?.substring(0, 100) + "...",
-			});
-		}
-		
-		// If no session cookie, redirect to sign-in
-		if (!sessionCookie) {
-			const signInUrl = new URL("/sign-in", request.url);
-			const response = NextResponse.redirect(signInUrl);
-			
-			// Add headers to help with debugging
-			response.headers.set("x-proxy-redirect", "no-session");
-			return response;
-		}
-		
-		return NextResponse.next();
-	} catch (error) {
-		console.error("Proxy error:", error);
-		
-		// On error, redirect to sign-in for safety
-		const signInUrl = new URL("/sign-in", request.url);
-		const response = NextResponse.redirect(signInUrl);
-		response.headers.set("x-proxy-redirect", "error");
-		return response;
-	}
+	// Allow all routes to pass through - authentication will be handled client-side
+	return NextResponse.next();
 }
 
 export const config = {
