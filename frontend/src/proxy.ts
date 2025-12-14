@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 	
 	// Define public routes that don't require authentication
@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
 		// Enhanced logging for debugging production issues
 		const isProduction = process.env.NODE_ENV === "production";
 		if (!isProduction) {
-			console.log("Middleware Debug:", {
+			console.log("Proxy Debug:", {
 				path: pathname,
 				sessionCookie: !!sessionCookie,
 				host: request.headers.get("host"),
@@ -49,18 +49,18 @@ export async function middleware(request: NextRequest) {
 			const response = NextResponse.redirect(signInUrl);
 			
 			// Add headers to help with debugging
-			response.headers.set("x-middleware-redirect", "no-session");
+			response.headers.set("x-proxy-redirect", "no-session");
 			return response;
 		}
 		
 		return NextResponse.next();
 	} catch (error) {
-		console.error("Middleware error:", error);
+		console.error("Proxy error:", error);
 		
 		// On error, redirect to sign-in for safety
 		const signInUrl = new URL("/sign-in", request.url);
 		const response = NextResponse.redirect(signInUrl);
-		response.headers.set("x-middleware-redirect", "error");
+		response.headers.set("x-proxy-redirect", "error");
 		return response;
 	}
 }
