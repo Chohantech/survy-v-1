@@ -14,7 +14,8 @@ const secret = createSecretKey(Buffer.from(process.env.JWT_SECRET, "utf-8"));
 
 // Determine environment
 const isProd = process.env.NODE_ENV === "production";
-const domain = isProd ? (process.env.FRONTEND_DOMAIN ?? "svryn.com") : undefined;
+// Use .svryn.com to work with both www and non-www subdomains
+const domain = isProd ? (process.env.FRONTEND_DOMAIN ? `.${process.env.FRONTEND_DOMAIN.replace(/^\./, '')}` : ".svryn.com") : undefined;
 let auth = null;
 
 /**
@@ -47,13 +48,17 @@ export const initAuth = async () => {
     "Database Name:", mongoose.connection.db.databaseName
   );
 
-  // Get base URL for better-auth (backend URL)
-  const baseURL = process.env.BACKEND_URL || process.env.API_URL || `http://localhost:${process.env.PORT || 5000}`;
+  // Get base URL for better-auth
+  // In production: Use frontend domain since nginx proxies requests
+  // In development: Use backend URL directly
   const frontendURL = process.env.FRONTEND_URL || "http://localhost:3000";
+  const baseURL = isProd 
+    ? frontendURL  // In production, use frontend domain (nginx proxies to backend)
+    : (process.env.BACKEND_URL || process.env.API_URL || `http://localhost:${process.env.PORT || 5000}`);
 
   auth = betterAuth({
     database: mongodbAdapter(mongoose.connection.db),
-    baseURL, // Backend URL for API routes
+    baseURL, // Frontend domain in prod (nginx handles routing), backend URL in dev
     basePath: "/api/auth", // API path prefix
 
     // Enable email/password login
@@ -85,10 +90,15 @@ export const initAuth = async () => {
     },
 
     // Trusted origins for CORS
+    // In production, these should be the frontend domain(s)
     trustedOrigins: [
       process.env.FRONTEND_URL,
       "http://localhost:3000",
-    ],
+      "https://svryn.com",
+      "https://www.svryn.com",
+      "http://svryn.com",
+      "http://www.svryn.com",
+    ].filter(Boolean), // Remove undefined values
 
     // User model configuration
     user: {

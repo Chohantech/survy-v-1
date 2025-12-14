@@ -55,8 +55,33 @@ app.use(
 
 console.log("FRONTEND URL: ",process.env.FRONTEND_URL)
 
+// Get frontend URLs for CORS
+const frontendUrls = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'https://svryn.com',
+  'https://www.svryn.com',
+  'http://svryn.com',
+  'http://www.svryn.com',
+].filter(Boolean); // Remove undefined values
+
 const corsOptions = {
-  origin: [process.env.FRONTEND_URL, 'http://localhost:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (frontendUrls.some(url => origin === url || origin.startsWith(url))) {
+      callback(null, true);
+    } else {
+      // In production, be more strict; in development, allow localhost
+      if (process.env.NODE_ENV === 'production') {
+        callback(new Error('Not allowed by CORS'));
+      } else {
+        callback(null, true);
+      }
+    }
+  },
   credentials: true, // Important: allow cookies to be sent
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
@@ -64,7 +89,9 @@ const corsOptions = {
     'Authorization', 
     'Cookie', 
     'Set-Cookie',
-    'X-Requested-With'
+    'X-Requested-With',
+    'X-Forwarded-For',
+    'X-Real-IP'
   ],
   exposedHeaders: ['Set-Cookie'], // Expose Set-Cookie header to client
 };
