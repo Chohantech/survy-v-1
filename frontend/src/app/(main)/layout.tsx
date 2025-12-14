@@ -27,9 +27,9 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   }
 
   // If no session, don't render children (will redirect)
-  if (!session?.session) {
-    return null;
-  }
+  // if (!session?.session) {
+  //   return null;
+  // }
 
   return (
     <SocketProvider>

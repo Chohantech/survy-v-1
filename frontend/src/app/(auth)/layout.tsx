@@ -32,9 +32,9 @@ const AuthLayout = ({ children }: AuthProps) => {
   }
 
   // If there's a session, don't render auth layout (will redirect)
-  if (session?.session) {
-    return null;
-  }
+  // if (session?.session) {
+  //   return null;
+  // }
 
   return (
     <main className="w-full md:h-screen overflow-y-hidden flex">
