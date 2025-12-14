@@ -26,6 +26,8 @@ export async function proxy(request: NextRequest) {
 	
 	// For protected routes, check for session
 	const sessionCookie = getSessionCookie(request);
+
+  console.log("Session Cookie: ", sessionCookie)
 	
 	// If no session cookie, redirect to sign-in
 	if (!sessionCookie) {
