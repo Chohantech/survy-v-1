@@ -79,7 +79,7 @@ const ProfileDropdown = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-72 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-600 rounded-xl mt-2 p-2 z-[9999] transition-all duration-200 ease-in-out"
+        className="w-72 bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-600 rounded-xl mt-2 p-2 z-9999 transition-all duration-200 ease-in-out"
         align="end">
         <DropdownMenuLabel className="font-normal p-3">
           <div className="flex flex-col space-y-2">

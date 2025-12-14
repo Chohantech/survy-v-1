@@ -88,13 +88,13 @@ export const StoryUploadDialog = ({ user }: { user: User }) => {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <div className="w-[120px] h-[200px] md:w-[140px] md:h-[240px] rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 overflow-hidden relative cursor-pointer group hover:scale-[1.05] transition-all duration-500 shadow-xl group-hover:shadow-2xl border-2 border-white/50">
+        <div className="w-[120px] h-[200px] md:w-[140px] md:h-[240px] rounded-3xl bg-linear-to-br from-indigo-500 via-purple-500 to-pink-500 overflow-hidden relative cursor-pointer group hover:scale-[1.05] transition-all duration-500 shadow-xl group-hover:shadow-2xl border-2 border-white/50">
           {/* Gradient Overlays */}
           <div className="absolute inset-0 bg-black/30"></div>
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-transparent to-pink-600/20 group-hover:opacity-80 transition-opacity duration-500" />
+          <div className="absolute inset-0 bg-linear-to-br from-indigo-600/20 via-transparent to-pink-600/20 group-hover:opacity-80 transition-opacity duration-500" />
           
           {/* Shine Effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
           
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
             <div className="bg-white/30 backdrop-blur-md p-4 rounded-full mb-4 group-hover:bg-white/40 transition-all duration-300 group-hover:scale-110">
@@ -105,10 +105,10 @@ export const StoryUploadDialog = ({ user }: { user: User }) => {
           
           {/* Enhanced Profile Picture */}
           <div className="absolute -top-3 left-3">
-            <div className="relative p-1.5 rounded-full bg-gradient-to-tr from-cyan-400 via-violet-500 to-fuchsia-500 group-hover:from-cyan-500 group-hover:via-violet-600 group-hover:to-fuchsia-600 transition-all duration-500 animate-pulse">
+            <div className="relative p-1.5 rounded-full bg-linear-to-tr from-cyan-400 via-violet-500 to-fuchsia-500 group-hover:from-cyan-500 group-hover:via-violet-600 group-hover:to-fuchsia-600 transition-all duration-500 animate-pulse">
               <div className="bg-white dark:bg-gray-900 rounded-full p-1">
                 <Image
-                  src={user.profilePicture || '/images/user.png'}
+                  src={user?.profilePicture || '/images/user.png'}
                   alt="Your avatar"
                   width={40}
                   height={40}
@@ -313,7 +313,7 @@ export const StoryUploadDialog = ({ user }: { user: User }) => {
               <button
                 onClick={handleUpload}
                 disabled={mediaItems.length === 0 || isPending}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-linear-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? (
                   <div className="flex items-center justify-center gap-2">

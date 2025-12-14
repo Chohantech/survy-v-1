@@ -224,7 +224,7 @@ const Home = () => {
             <Button
               onClick={() => setIsCreateReelOpen(true)}
               variant={"default"}
-              className="flex bg-transparent hover:bg-transparent border-none outline-none items-center gap-2 bg-gradient-to-r cursor-pointer text-[#4EAAE9]"
+              className="flex bg-transparent hover:bg-transparent border-none outline-none items-center gap-2 bg-linear-to-r cursor-pointer text-[#4EAAE9]"
             >
               <Plus size={16} />
               Create Reel

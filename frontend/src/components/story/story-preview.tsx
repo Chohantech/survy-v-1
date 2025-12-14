@@ -107,7 +107,7 @@ export const StoryPreview = ({ user }: { user: User }) => {
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {/* Create Story Card */}
-          <div className="flex-shrink-0 snap-start">
+          <div className="shrink-0 snap-start">
             <StoryUploadDialog user={user} />
           </div>
 

@@ -41,7 +41,7 @@ const HomeProfileHeader = ({ user }: { user: User }) => {
 
   console.log();
 
-  const profileData = {
+  const profileData = user && {
     id: user.id,
     name: user.name,
     description: `${user.currentJob} based in ${user.location}`,
@@ -61,7 +61,7 @@ const HomeProfileHeader = ({ user }: { user: User }) => {
     <div className="max-w-4xl mx-auto pb-8">
       <ProfileSection
         {...profileData}
-        photosImage={images?.[0] || profileData.profileImage}
+        photosImage={images?.[0] || profileData?.profileImage}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { SignJWT } from "jose";
 import clientPromise from "./db";
 import { sendResetEmail } from "./actions/email";
+import { nextCookies } from "better-auth/next-js";
 
 // ================================
 // ENVIRONMENT VARIABLES & SECRET
@@ -46,6 +47,7 @@ const db = client.db("social-network");
 // ================================
 
 export const auth = betterAuth({
+  plugins: [nextCookies()],
   database: mongodbAdapter(db), // MongoDB adapter for BetterAuth
 
   // ============================
