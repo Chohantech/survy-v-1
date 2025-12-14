@@ -23,33 +23,29 @@ const authRoutes = ["/sign-in", "/sign-up", "/forgot-password"];
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   
-  // Check for better-auth session cookie (primary authentication method)
-  // Better-auth uses a cookie with prefix "better-auth.session_token" by default
-  const betterAuthSessionCookie = request.cookies.get("better-auth.session_token")?.value;
-  
-  // Also check for the custom token cookie (set by backend database hook)
-  const tokenCookie = request.cookies.get("token")?.value;
-
-  console.log("Better-auth session cookie:", betterAuthSessionCookie);
-  
-  // Try to get the session from better-auth API
+  // Primary authentication check: Get session from better-auth API
+  // This queries the database and is the source of truth
   let session = null;
+  let sessionError = null;
   try {
     session = await auth.api.getSession({ headers: request.headers });
   } catch (error) {
+    sessionError = error;
     console.error("Error getting session:", error);
   }
   
-  // User is authenticated if:
-  // 1. Better-auth session exists, OR
-  // 2. Better-auth session cookie exists, OR  
-  // 3. Custom token cookie exists
-  const isAuthenticated = !!(session?.session || betterAuthSessionCookie || tokenCookie);
+  // User is authenticated ONLY if session exists in database
+  // We don't check cookies because:
+  // 1. Cookies might persist even after session deletion
+  // 2. Session in database is the source of truth
+  // 3. If session is deleted, getSession() returns null/undefined
+  const isAuthenticated = !!session?.session;
 
-  console.log("Better-auth session cookie:", !!betterAuthSessionCookie);
-  console.log("Token cookie:", !!tokenCookie);
   console.log("Session from API:", !!session?.session);
   console.log("Is authenticated:", isAuthenticated);
+  if (sessionError) {
+    console.log("Session error:", sessionError);
+  }
 
   // Redirect unauthenticated user from protected pages
   if (protectedRoutes.some((r) => pathname.startsWith?.(r)) && !isAuthenticated) {

@@ -160,7 +160,15 @@ export const initAuth = async () => {
           },
         },
         delete: {
-          async after(_, context) {
+          async before(session) {
+            // Log before deletion for debugging
+            console.log("Session deletion initiated", { 
+              sessionId: session?.id, 
+              userId: session?.userId 
+            });
+            return { data: session };
+          },
+          async after(session, context) {
             // Delete the token cookie - must match exact settings used when setting it
             // Try with domain first (if domain was set during creation)
             if (domain) {
@@ -185,7 +193,11 @@ export const initAuth = async () => {
               expires: new Date(0),
             });
             
-            console.log("Token cookie deletion attempted", { domain, isProd });
+            console.log("Session deleted and token cookie deletion attempted", { 
+              sessionId: session?.id,
+              domain, 
+              isProd 
+            });
           },
         },
       },
