@@ -24,14 +24,30 @@ const MobileSheet = () => {
   const router = useRouter();
 
   const handleLogout = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success("user logged out successfully");
-          router.push("/sign-in");
+    try {
+      // Call better-auth signOut which will trigger backend session deletion
+      await authClient.signOut({
+        fetchOptions: {
+          credentials: "include", // Ensure cookies are sent
         },
-      },
-    });
+      });
+      
+      // Note: httpOnly cookies cannot be deleted from JavaScript
+      // The backend delete hook should handle cookie deletion
+      
+      toast.success("user logged out successfully");
+      // Use router.push and then reload to ensure state is cleared
+      router.push("/sign-in");
+      // Small delay to ensure navigation happens, then reload
+      if (typeof window !== "undefined") {
+        setTimeout(() => {
+          window.location.href = "/sign-in";
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout. Please try again.");
+    }
   };
 
   return (

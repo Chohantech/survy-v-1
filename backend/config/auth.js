@@ -161,14 +161,31 @@ export const initAuth = async () => {
         },
         delete: {
           async after(_, context) {
+            // Delete the token cookie - must match exact settings used when setting it
+            // Try with domain first (if domain was set during creation)
+            if (domain) {
+              context.setCookie("token", "", {
+                httpOnly: true,
+                secure: isProd,
+                sameSite: isProd ? "none" : "lax",
+                path: "/",
+                domain: domain,
+                maxAge: 0,
+                expires: new Date(0),
+              });
+            }
+            
+            // Always also try without domain (covers both dev and edge cases)
             context.setCookie("token", "", {
               httpOnly: true,
               secure: isProd,
               sameSite: isProd ? "none" : "lax",
               path: "/",
-              ...(domain && { domain }),
-              maxAge: 0, // Expire immediately
+              maxAge: 0,
+              expires: new Date(0),
             });
+            
+            console.log("Token cookie deletion attempted", { domain, isProd });
           },
         },
       },
