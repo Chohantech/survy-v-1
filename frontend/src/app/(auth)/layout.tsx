@@ -1,12 +1,40 @@
+"use client";
 import AuthBottomSheet from "@/components/auth/auth-bottom-sheet";
 import Image from "next/image";
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { authClient } from "@/lib/auth-client";
+import { Loader2 } from "lucide-react";
 
 interface AuthProps {
   children: React.ReactNode;
 }
 
 const AuthLayout = ({ children }: AuthProps) => {
+  const router = useRouter();
+  const { data, isPending } = authClient.useSession();
+
+  // Redirect to home if already authenticated
+  useEffect(() => {
+    if (!isPending && data?.session) {
+      router.push("/home");
+    }
+  }, [data?.session, isPending, router]);
+
+  // Show loading state while checking authentication
+  if (isPending) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  // Don't render auth pages if already authenticated (redirect will happen)
+  if (data?.session) {
+    return null;
+  }
+
   return (
     <main className="w-full md:h-screen overflow-y-hidden flex">
       <div className="h-full flex-1 flex flex-col items-center justify-center max-md:hidden">
