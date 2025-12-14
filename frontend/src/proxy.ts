@@ -3,14 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl;
 	
-	// Define public routes that don't require authentication
-	const publicRoutes = [
-		"/",
-		"/sign-in",
-		"/sign-up", 
-		"/forgot-password",
-		"/reset-password",
-	];
+	// Handle root path redirect
+	if (pathname === "/") {
+		return NextResponse.redirect(new URL("/home", request.url));
+	}
 	
 	// Always allow API routes
 	if (pathname.startsWith("/api/")) {
@@ -25,7 +21,7 @@ export async function proxy(request: NextRequest) {
 		return NextResponse.next();
 	}
 	
-	// Allow all routes to pass through - authentication will be handled client-side
+	// Allow all other routes to pass through
 	return NextResponse.next();
 }
 

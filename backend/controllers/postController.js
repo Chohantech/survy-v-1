@@ -54,16 +54,16 @@ export const createPost = async (req, res) => {
       postData.group = groupId;
     }
 
-    if (latitude && longitude) {
-      const locationName = await getLocationName(latitude, longitude);
-      postData.location = {
-        name: locationName,
-        coordinates: {
-          latitude,
-          longitude,
-        },
-      };
-    }
+    // if (latitude && longitude) {
+    //   const locationName = await getLocationName(latitude, longitude);
+    //   postData.location = {
+    //     name: locationName,
+    //     coordinates: {
+    //       latitude,
+    //       longitude,
+    //     },
+    //   };
+    // }
 
     // Handle multiple media files
     if (mediaFiles && mediaFiles.length > 0) {

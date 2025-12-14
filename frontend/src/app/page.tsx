@@ -1,7 +1,4 @@
-import { redirect } from "next/navigation";
-
+// This page is not needed since middleware handles the root redirect
 export default function Home() {
-  return redirect("/home");
-
-  return <div>Home</div>;
+  return null;
 }
